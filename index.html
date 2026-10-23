@@ -27,16 +27,16 @@
     button { touch-action:manipulation; }
     .app {
       position:fixed;
-      left:0;
-      right:0;
-      top:250px;
-      bottom:0;
+      inset:0;
       max-width:520px;
       margin:0 auto;
       min-height:0;
-      padding:0 14px 18px;
+      padding:calc(env(safe-area-inset-top) + 10px) 14px calc(env(safe-area-inset-bottom) + 10px);
       overflow:hidden;
+      display:flex;
+      align-items:center;
     }
+    .card { width:100%; }
     .app { max-width:520px; margin:auto; min-height:100vh; padding:18px 14px 30px; }
     .hero { background:#111827; color:white; border-radius:24px; padding:22px; box-shadow:0 10px 30px #0002; }
     .eyebrow { opacity:.7; font-size:13px; }
