@@ -29,8 +29,9 @@
     .day.other { opacity:.3; }
     .day.today { outline:3px solid #111827; }
     .num { font-size:12px; color:#6b7280; }
-    .shift { margin-top:5px; font-size:17px; font-weight:900; }
-    .A .shift { color:#d97706; } .B .shift { color:#2563eb; } .C .shift { color:#7c3aed; } .OFF .shift { color:#16a34a; }
+    .shift { margin:5px auto 0; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:900; color:#111827; }
+    .A .shift { background:#fed7aa; } .B .shift { background:#bfdbfe; } .C .shift { background:#e9d5ff; } .OFF .shift { background:#bbf7d0; }
+    .shift.custom { width:auto; min-width:34px; padding:0 7px; border-radius:12px; background:#e5e7eb; font-size:11px; }
     .noteDot { width:5px;height:5px;border-radius:50%;background:#ef4444;position:absolute;right:7px;top:7px; }
     .legend { display:flex; justify-content:center; gap:12px; flex-wrap:wrap; font-size:12px; color:#6b7280; margin-top:12px; }
     dialog { border:0; border-radius:22px; width:min(90vw,420px); padding:20px; }
@@ -117,7 +118,7 @@ function render(){
     const d=new Date(start.getFullYear(),start.getMonth(),start.getDate()+i), x=shiftFor(d), k=key(d), custom=ns[k];
     const el=document.createElement("button"); el.className=`day ${x.s}`+(d.getMonth()!==view.getMonth()?" other":"")+(k===today?" today":"");
     const label=custom?.tag || (x.s==="OFF"?"휴":x.s);
-    el.innerHTML=`<div class="num">${d.getDate()}</div><div class="shift">${label}</div>${custom?.memo?'<span class="noteDot"></span>':''}`;
+    el.innerHTML=`<div class="num">${d.getDate()}</div><div class="shift${custom?.tag?' custom':''}">${label}</div>${custom?.memo?'<span class="noteDot"></span>':''}`;
     el.onclick=()=>openEditor(d); cal.appendChild(el);
   }
 }
