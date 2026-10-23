@@ -40,7 +40,7 @@
     .hero h1 { margin:6px 0 4px; font-size:30px; }
     .hero .time { font-size:16px; opacity:.9; }
     .hero .next { margin-top:14px; font-weight:700; }
-    .card { background:white; margin-top:14px; border-radius:22px; padding:14px; box-shadow:0 6px 22px #0000000d; }
+    .card { background:white; margin-top:0; border-radius:22px; padding:14px; box-shadow:0 6px 22px #0000000d; }
     .toolbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
     button { border:0; background:#eef0f4; border-radius:12px; padding:10px 13px; font-size:16px; }
     #monthTitle { font-weight:800; font-size:19px; }
@@ -112,13 +112,6 @@
 </head>
 <body>
 <div class="app">
-  <section class="hero">
-    <div class="eyebrow" id="todayDate"></div>
-    <h1 id="todayShift"></h1>
-    <div class="time" id="todayTime"></div>
-    <div class="next" id="nextOff"></div>
-  </section>
-
   <section class="card">
     <div class="toolbar">
       <button id="prev" aria-label="이전 달">‹</button>
@@ -200,7 +193,7 @@ save.onclick=()=>{ const ns=notes(), k=key(editing); if(tag.value||memo.value) n
 cancel.onclick=()=>editor.close();
 prev.onclick=()=>{view=new Date(view.getFullYear(),view.getMonth()-1,1);render()};
 next.onclick=()=>{view=new Date(view.getFullYear(),view.getMonth()+1,1);render()};
-renderHero(); render();
+render();
 let lastTouchEnd = 0;
 document.addEventListener("touchend", e => {
   const now = Date.now();
