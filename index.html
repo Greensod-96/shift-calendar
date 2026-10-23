@@ -12,10 +12,28 @@
   <style>
     :root { font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif; color:#111827; background:#f3f4f6; }
     * { box-sizing:border-box; }
-    html,body { width:100%; height:100%; overflow:hidden; overscroll-behavior:none; }
-    body { margin:0; padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom); touch-action:manipulation; -webkit-text-size-adjust:100%; }
+    html,body {
+      position:fixed;
+      inset:0;
+      width:100%;
+      height:100%;
+      margin:0;
+      padding:0;
+      overflow:hidden;
+      overscroll-behavior:none;
+      touch-action:manipulation;
+      -webkit-text-size-adjust:100%;
+    }
     button { touch-action:manipulation; }
-    .app { height:100dvh; overflow:hidden; }
+    .app {
+      position:absolute;
+      inset:0;
+      height:auto;
+      min-height:0;
+      overflow:hidden;
+      padding-top:calc(18px + env(safe-area-inset-top));
+      padding-bottom:calc(18px + env(safe-area-inset-bottom));
+    }
     .app { max-width:520px; margin:auto; min-height:100vh; padding:18px 14px 30px; }
     .hero { background:#111827; color:white; border-radius:24px; padding:22px; box-shadow:0 10px 30px #0002; }
     .eyebrow { opacity:.7; font-size:13px; }
@@ -188,6 +206,9 @@ document.addEventListener("touchend", e => {
   const now = Date.now();
   if (now - lastTouchEnd <= 300) e.preventDefault();
   lastTouchEnd = now;
+}, {passive:false});
+document.addEventListener("touchmove", e => {
+  if (!e.target.closest("dialog")) e.preventDefault();
 }, {passive:false});
 document.addEventListener("gesturestart", e => e.preventDefault(), {passive:false});
 document.addEventListener("gesturechange", e => e.preventDefault(), {passive:false});
