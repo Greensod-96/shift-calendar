@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#111827">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="내 근무표">
+  <link rel="manifest" href="manifest.json">
+  <title>내 근무표</title>
+  <style>
+    :root { font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif; color:#111827; background:#f3f4f6; }
+    * { box-sizing:border-box; }
+    body { margin:0; padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom); }
+    .app { max-width:520px; margin:auto; min-height:100vh; padding:18px 14px 30px; }
+    .hero { background:#111827; color:white; border-radius:24px; padding:22px; box-shadow:0 10px 30px #0002; }
+    .eyebrow { opacity:.7; font-size:13px; }
+    .hero h1 { margin:6px 0 4px; font-size:30px; }
+    .hero .time { font-size:16px; opacity:.9; }
+    .hero .next { margin-top:14px; font-weight:700; }
+    .card { background:white; margin-top:14px; border-radius:22px; padding:14px; box-shadow:0 6px 22px #0000000d; }
+    .toolbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+    button { border:0; background:#eef0f4; border-radius:12px; padding:10px 13px; font-size:16px; }
+    #monthTitle { font-weight:800; font-size:19px; }
+    .week,.grid { display:grid; grid-template-columns:repeat(7,1fr); gap:5px; }
+    .week div { text-align:center; font-size:12px; color:#6b7280; padding:4px 0; }
+    .day { min-height:63px; border-radius:14px; padding:6px 3px; text-align:center; position:relative; background:#f8fafc; }
+    .day.other { opacity:.3; }
+    .day.today { outline:3px solid #111827; }
+    .num { font-size:12px; color:#6b7280; }
+    .shift { margin-top:5px; font-size:17px; font-weight:900; }
+    .A .shift { color:#d97706; } .B .shift { color:#2563eb; } .C .shift { color:#7c3aed; } .OFF .shift { color:#16a34a; }
+    .noteDot { width:5px;height:5px;border-radius:50%;background:#ef4444;position:absolute;right:7px;top:7px; }
+    .legend { display:flex; justify-content:center; gap:12px; flex-wrap:wrap; font-size:12px; color:#6b7280; margin-top:12px; }
+    dialog { border:0; border-radius:22px; width:min(90vw,420px); padding:20px; }
+    dialog::backdrop { background:#0006; }
+    input,select { width:100%; margin:7px 0 12px; padding:12px; border:1px solid #ddd; border-radius:12px; font-size:16px; }
+    .actions { display:flex; gap:8px; justify-content:flex-end; }
+    .small { font-size:12px;color:#6b7280;margin-top:10px;line-height:1.45; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <section class="hero">
+    <div class="eyebrow" id="todayDate"></div>
+    <h1 id="todayShift"></h1>
+    <div class="time" id="todayTime"></div>
+    <div class="next" id="nextOff"></div>
+  </section>
+
+  <section class="card">
+    <div class="toolbar">
+      <button id="prev" aria-label="이전 달">‹</button>
+      <div id="monthTitle"></div>
+      <button id="next" aria-label="다음 달">›</button>
+    </div>
+    <div class="week"><div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div></div>
+    <div class="grid" id="calendar"></div>
+    <div class="legend"><span>A 07~15</span><span>B 15~23</span><span>C 23~07</span><span>휴 휴무</span></div>
+    <div class="small">기준: 2026-10-23 = B근무 4일차 · AAAAAA-휴휴-BBBBBB-휴휴-CCCCCC-휴휴 반복</div>
+  </section>
+</div>
+
+<dialog id="editor">
+  <h3 id="editDate"></h3>
+  <label>표시</label>
+  <select id="tag">
+    <option value="">기본 근무표</option><option>연차</option><option>오전반차</option><option>오후반차</option><option>휴가</option>
+  </select>
+  <label>메모</label>
+  <input id="memo" placeholder="메모 (선택)">
+  <div class="actions"><button id="cancel">취소</button><button id="save">저장</button></div>
+</dialog>
+
+<script>
+const cycle = [
+  ...Array(6).fill("A"), ...Array(2).fill("OFF"),
+  ...Array(6).fill("B"), ...Array(2).fill("OFF"),
+  ...Array(6).fill("C"), ...Array(2).fill("OFF")
+];
+const info = {A:["A근무","07:00 ~ 15:00"],B:["B근무","15:00 ~ 23:00"],C:["C근무","23:00 ~ 07:00"],OFF:["휴무",""]};
+// 2026-10-23 is B day 4. In the cycle B day 4 has index 11.
+const anchor = new Date(2026,9,23);
+const anchorIndex = 11;
+const dayMs = 86400000;
+function localDay(d){ return new Date(d.getFullYear(),d.getMonth(),d.getDate()); }
+function shiftFor(d){
+  const diff = Math.round((localDay(d)-anchor)/dayMs);
+  const idx = ((anchorIndex+diff)%cycle.length+cycle.length)%cycle.length;
+  const s = cycle[idx];
+  let ordinal = null;
+  if(s!=="OFF"){
+    let start=idx; while(start>0 && cycle[start-1]===s) start--;
+    ordinal=idx-start+1;
+  }
+  return {s,ordinal,idx};
+}
+function key(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`}
+function notes(){try{return JSON.parse(localStorage.shiftNotes||"{}")}catch{return {}}}
+let view = new Date(); view = new Date(view.getFullYear(),view.getMonth(),1);
+const cal=document.querySelector("#calendar"), title=document.querySelector("#monthTitle");
+function renderHero(){
+  const d=new Date(), x=shiftFor(d);
+  document.querySelector("#todayDate").textContent = `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일`;
+  document.querySelector("#todayShift").textContent = x.s==="OFF" ? "오늘은 휴무" : `${info[x.s][0]} · ${x.ordinal}일차`;
+  document.querySelector("#todayTime").textContent=info[x.s][1];
+  let n=1; while(shiftFor(new Date(d.getFullYear(),d.getMonth(),d.getDate()+n)).s!=="OFF") n++;
+  document.querySelector("#nextOff").textContent = x.s==="OFF" ? "푹 쉬는 날 🙌" : `다음 휴무까지 D-${n}`;
+}
+function render(){
+  title.textContent=`${view.getFullYear()}년 ${view.getMonth()+1}월`; cal.innerHTML="";
+  const first=new Date(view.getFullYear(),view.getMonth(),1);
+  const start=new Date(view.getFullYear(),view.getMonth(),1-first.getDay());
+  const ns=notes(), today=key(new Date());
+  for(let i=0;i<42;i++){
+    const d=new Date(start.getFullYear(),start.getMonth(),start.getDate()+i), x=shiftFor(d), k=key(d), custom=ns[k];
+    const el=document.createElement("button"); el.className=`day ${x.s}`+(d.getMonth()!==view.getMonth()?" other":"")+(k===today?" today":"");
+    const label=custom?.tag || (x.s==="OFF"?"휴":x.s);
+    el.innerHTML=`<div class="num">${d.getDate()}</div><div class="shift">${label}</div>${custom?.memo?'<span class="noteDot"></span>':''}`;
+    el.onclick=()=>openEditor(d); cal.appendChild(el);
+  }
+}
+let editing;
+function openEditor(d){
+  editing=d; const n=notes()[key(d)]||{};
+  editDate.textContent=`${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 · ${info[shiftFor(d).s][0]}`;
+  tag.value=n.tag||""; memo.value=n.memo||""; editor.showModal();
+}
+save.onclick=()=>{ const ns=notes(), k=key(editing); if(tag.value||memo.value) ns[k]={tag:tag.value,memo:memo.value}; else delete ns[k]; localStorage.shiftNotes=JSON.stringify(ns); editor.close(); render(); };
+cancel.onclick=()=>editor.close();
+prev.onclick=()=>{view=new Date(view.getFullYear(),view.getMonth()-1,1);render()};
+next.onclick=()=>{view=new Date(view.getFullYear(),view.getMonth()+1,1);render()};
+renderHero(); render();
+if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
+</script>
+</body></html>
