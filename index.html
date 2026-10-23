@@ -26,13 +26,16 @@
     }
     button { touch-action:manipulation; }
     .app {
-      position:absolute;
-      inset:0;
-      height:auto;
+      position:fixed;
+      left:0;
+      right:0;
+      top:250px;
+      bottom:0;
+      max-width:520px;
+      margin:0 auto;
       min-height:0;
+      padding:0 14px 18px;
       overflow:hidden;
-      padding-top:max(110px, calc(18px + env(safe-area-inset-top)));
-      padding-bottom:calc(18px + env(safe-area-inset-bottom));
     }
     .app { max-width:520px; margin:auto; min-height:100vh; padding:18px 14px 30px; }
     .hero { background:#111827; color:white; border-radius:24px; padding:22px; box-shadow:0 10px 30px #0002; }
